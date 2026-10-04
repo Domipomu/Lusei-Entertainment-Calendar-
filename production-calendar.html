@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lusei Entertainment — Production Calendar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
+  :root{
+    --bg:#E4F3EE; --card:#FFFFFF; --cell:#E3F5F0; --ink:#1C2B26; --sub:#5E7A70; --line:#CFE9E0;
+    --ems:#2E5E3E; --mbm:#C6871A; --j6:#2E5CA6; --ih:#D9622B; --tv:#6A3FA0;
+    --header:#1C2B26;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#101A17; --card:#17221E; --cell:#1E2C27; --ink:#EAF3EF; --sub:#8FAAA0; --line:#2C3E38; --header:#0B1210; }
+  }
+  :root[data-theme="dark"]{ --bg:#101A17; --card:#17221E; --cell:#1E2C27; --ink:#EAF3EF; --sub:#8FAAA0; --line:#2C3E38; --header:#0B1210; }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;}
+  .app{max-width:1080px;margin:0 auto;padding:18px 14px 40px;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .topbar h1{font-family:Sora,sans-serif;font-size:1.3rem;font-weight:800;margin:0;line-height:1.2;}
+  .topbar .tagline{font-size:.75rem;color:var(--sub);margin-top:3px;}
+  .theme-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:.72rem;cursor:pointer;font-family:Inter,sans-serif;}
+  .main{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;}
+  .bottompanels{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-top:14px;}
+  @media(max-width:760px){.bottompanels{grid-template-columns:1fr;}}
+  .panelbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;}
+  .panelbox h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);margin:0 0 10px;font-weight:600;}
+  .proj{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;margin:0 8px 8px 0;color:#fff;font-size:.75rem;font-weight:600;}
+  .proj small{font-weight:400;font-size:.66rem;opacity:.85;}
+  .proj.tbd{background:transparent;border:1.5px dashed var(--tv);color:var(--tv);}
+  .stagekey{font-size:.72rem;color:var(--ink);line-height:2;margin-top:10px;}
+  .statuskey{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .skey-pill{font-size:.68rem;font-weight:600;padding:4px 10px;border-radius:999px;color:#fff;background:#6b6258;}
+  .skey-pill.todo{background:#6b6258;opacity:.55;border:1.5px dashed rgba(255,255,255,.7);color:#fff;}
+  .skey-pill.done{text-decoration:line-through;}
+  #notes{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;font-size:.8rem;padding:10px;resize:vertical;}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab{font-weight:600;font-size:.8rem;padding:7px 15px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--sub);cursor:pointer;}
+  .tab.active{background:var(--header);color:#fff;border-color:var(--header);}
+  .month{display:none;}
+  .month.active{display:block;}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:4px;}
+  .dow span{font-size:.65rem;font-weight:600;color:var(--sub);text-align:center;letter-spacing:.04em;}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(20px,auto);gap:6px;margin-bottom:6px;}
+  .daynum{grid-row:1;font-size:.68rem;color:var(--sub);font-weight:600;padding:8px;background:var(--cell);border-radius:10px;min-height:30px;box-sizing:border-box;}
+  .daynum.hol{background:#c0392b33;color:#c0392b;}
+  .daynum.empty{visibility:hidden;background:transparent;}
+  .bar{border-radius:999px;padding:5px 10px;font-size:.66rem;font-weight:600;color:#fff;cursor:pointer;overflow:hidden;margin:2px 0 0;box-sizing:border-box;white-space:nowrap;text-overflow:ellipsis;}
+  .bar.todo{background:var(--c);opacity:.55;color:#fff;border:1.5px dashed rgba(255,255,255,.7);}
+  .bar.progress{background:var(--c);color:#fff;}
+  .bar.done{background:var(--c);color:#fff;text-decoration:line-through;}
+  .addbtn{grid-column:1/8;font-size:.65rem;color:var(--sub);background:none;border:1px dashed var(--line);border-radius:8px;padding:3px;cursor:pointer;margin-top:2px;}
+  .addbtn:hover{color:var(--ink);border-color:var(--sub);}
+  .note{font-size:.72rem;color:var(--sub);font-style:italic;margin-top:10px;line-height:1.5;}
+  /* modal */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:14px;padding:18px;width:100%;max-width:340px;border:1px solid var(--line);}
+  .modal h4{margin:0 0 12px;font-size:.9rem;font-family:Sora,sans-serif;}
+  .modal label{display:block;font-size:.68rem;color:var(--sub);margin:10px 0 4px;font-weight:600;}
+  .modal input,.modal select{width:100%;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;font-size:.8rem;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;}
+  .modal-actions button{flex:1;padding:8px;border-radius:8px;border:none;font-weight:600;font-size:.75rem;cursor:pointer;font-family:Inter,sans-serif;}
+  .btn-save{background:var(--header);color:#fff;}
+  .btn-del{background:#c0392b;color:#fff;}
+  .btn-cancel{background:var(--bg);color:var(--ink);border:1px solid var(--line) !important;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div>
+      <h1>Lusei Entertainment — Production Calendar</h1>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="theme-btn" onclick="exportData()">⬇ Export</button>
+      <button class="theme-btn" onclick="exportICS()">📅 Add to Calendar</button>
+      <label class="theme-btn" style="cursor:pointer;">⬆ Import<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+      <button class="theme-btn" onclick="toggleTheme()">Toggle theme</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="tabs" id="tabs"></div>
+    <div id="months"></div>
+  </div>
+
+  <div class="bottompanels">
+    <div class="panelbox">
+      <h3>Projects</h3>
+      <div class="proj" style="background:var(--ems)">EMS <small>· 2 videos/mo</small></div>
+      <div class="proj" style="background:var(--mbm)">MBM <small>· 2 videos/mo</small></div>
+      <div class="proj" style="background:var(--j6)">J6 / JASCEEX <small>· trial: 3 Reels + 2 Long-form</small></div>
+      <div class="proj" style="background:var(--ih)">In-House <small>· 2 sessions/mo</small></div>
+      <span style="font-size:.7rem;color:var(--sub);margin-right:4px;">Pick color →</span><input type="color" id="tvColor" value="#6a3fa0" title="Pick a color for Lusei TV" style="width:34px;height:34px;border:none;background:none;padding:0;vertical-align:middle;cursor:pointer;margin-right:6px;"><div class="proj tbd" id="tvPill" contenteditable="true" spellcheck="false" title="Click to edit">Lusei TV — To be discussed</div>
+      <div class="statuskey">
+        <span class="skey-pill todo">To-do</span>
+        <span class="skey-pill">In progress</span>
+        <span class="skey-pill done">Done</span>
+      </div>
+    </div>
+    <div class="panelbox">
+      <h3>Notes</h3>
+      <textarea id="notes" placeholder="Mentor notes, adjustments, questions…"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h4 id="modalTitle">Edit task</h4>
+    <label>Label</label>
+    <input id="fLabel" type="text" placeholder="e.g. J6 Reel 2 – Edit">
+    <label>Project</label>
+    <select id="fColor">
+      <option value="ems">EMS</option><option value="mbm">MBM</option>
+      <option value="j6">J6 / JASCEEX</option><option value="ih">In-House</option>
+      <option value="tv">Lusei TV</option>
+    </select>
+    <label>Status</label>
+    <select id="fStatus"><option value="todo">To-do</option><option value="progress">In progress</option><option value="done">Done</option></select>
+    <label>Start day (Mon=1 … Sun=7)</label>
+    <input id="fStart" type="number" min="1" max="7">
+    <label>End day (Mon=1 … Sun=7)</label>
+    <input id="fEnd" type="number" min="1" max="7">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-del" id="delBtn" onclick="deleteBar()">Delete</button>
+      <button class="btn-save" onclick="saveBar()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="exportOverlay">
+  <div class="modal" style="max-width:480px;">
+    <h4>Export data</h4>
+    <p style="font-size:.75rem;color:var(--sub);margin:0 0 8px;">Automatic file-save isn't available here. Tap the box below, select all, and copy — then paste it into a message (to me, or to whoever you're sending this to).</p>
+    <textarea id="exportText" readonly style="width:100%;height:220px;font-family:monospace;font-size:.7rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:8px;" onclick="this.select()"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('exportOverlay').classList.remove('show')">Close</button>
+      <button class="btn-save" onclick="copyExportText()">Copy</button>
+    </div>
+  </div>
+</div>
+<script>
+const COLORS = {ems:'var(--ems)',mbm:'var(--mbm)',j6:'var(--j6)',ih:'var(--ih)',tv:'var(--tv)'};
+const PROJECT_NAME = {ems:'EMS',mbm:'MBM',j6:'J6/JASCEEX',ih:'In-House',tv:'Lusei TV'};
+function bar(label,color,status,startCol,endCol,detail,segs){ return {id:Math.random().toString(36).slice(2), label,color,status,startCol,endCol,detail:detail||'',segs:segs||null}; }
+function seg(col,text,endCol){ return {col,end:endCol||col,text}; }
+const PIPE_REEL = "Reel pipeline (~5 working days, compressed): Budget+Concept+Script (1d) → Storyboard (0.5d) → Shoot (1d) → Edit (1.5-2d) → QC+Approval+Publish (1d).";
+const PIPE_LONG = "Long-form pipeline: Budget+Concept (1d) → Script (1d) → Storyboard (1d) → Execution/pre-prod (1d) → Shoot (1-2d) → Edit (2-3d) → Submission+QC (1d) → Approval+Publish (1d). Full stage-by-stage = 9-11 days; the 7-day estimate compresses the first 3 and last 3 stages into one day each.";
+
+const DEFAULT_MONTHS = [
+{ name:"September 2026",
+  note:"",
+  weeks: [
+    {
+        "dates": [
+            null,
+            null,
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        "bars": []
+    },
+    {
+        "dates": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            {
+                "n": 12,
+                "hol": 1
+            },
+            13
+        ],
+        "bars": []
+    },
+    {
+        "dates": [
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+        ],
+        "bars": []
+    },
+    {
+        "dates": [
+            21,
+            22,
+            23,
+            24,
+            25,
+            {
+                "n": 26,
+                "hol": 1
+            },
+            27
+        ],
+        "bars": [
+            {
+                "id": "qwdu1ub04fe",
+                "label": "📝 J6 · Deal Agreed",
+                "color": "j6",
+                "status": "done",
+                "startCol": 1,
+                "endCol": 1,
+                "detail": "Reel pipeline (~5 working days, compressed): Budget+Concept+Script (1d) → Storyboard (0.5d) → Shoot (1d) → Edit (1.5-2d) → QC+Approval+Publish (1d).",
+                "segs": null
+            },
+            {
+                "id": "on5217kv05i",
+                "label": "Reel 1 · Shoot→QC",
+                "color": "j6",
+                "status": "done",
+                "startCol": 2,
+                "endCol": 4,
+                "detail": "Reel pipeline (~5 working days, compressed): Budget+Concept+Script (1d) → Storyboard (0.5d) → Shoot (1d) → Edit (1.5-2d) → QC+Approval+Publish (1d).",
+                "segs": null
+            },
+            {
+                "id": "df3w6b9x95q",
+                "label": "✅ Reel 1 · Publish (target)",
+                "color": "j6",
+                "status": "done",
+                "startCol": 5,
+                "endCol": 5,
+                "detail": "Reel pipeline (~5 working days, compressed): Budget+Concept+Script (1d) → Storyboard (0.5d) → Shoot (1d) → Edit (1.5-2d) → QC+Approval+Publish (1d).",
+                "segs": null
+            }
+        ]
+    },
+    {
+        "dates": [
+            28,
+            29,
+            30,
+            null,
+            null,
+            null,
+            null
+        ],
+        "bars": [
+            {
+                "id": "kdgrmlqj5l",
+                "label": "J6 Reel 2 ·script - shoot →Edit",
+                "color": "j6",
+                "status": "progress",
+                "startCol": 1,
+                "endCol": 2,
+                "detail": "Reel pipeline (~5 working days, compressed): Budget+Concept+Script (1d) → Storyboard (0.5d) → Shoot (1d) → Edit (1.5-2d) → QC+Approval+Publish (1d).",
+                "segs": null
+            },
+            {
+                "id": "scyl5th9a6",
+                "label": "J6 Reel 2 · QC - Publish",
+                "color": "j6",
+                "status": "progress",
+                "startCol": 3,
+                "endCol": 3,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "oy8sw5xqd0b",
+                "label": "MONTHLY REVIEW AND NEXT MONTH PLANNING",
+                "color": "tv",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 3,
+                "detail": "",
+                "segs": null
+            }
+        ]
+    }
+] },
+{ name:"October 2026",
+  note:"J6 Reel 2–3 / Long-form 1–2 dates are planning assumptions — confirm topics with mentor/client. 26–31 Oct: EMS/MBM/In-House cycle 1 begins.",
+  weeks: [
+    {
+        "dates": [
+            null,
+            null,
+            null,
+            1,
+            2,
+            3,
+            4
+        ],
+        "bars": [
+            {
+                "id": "j806yfum4x8",
+                "label": "J6 reel 2 Deadline",
+                "color": "j6",
+                "status": "progress",
+                "startCol": 4,
+                "endCol": 4,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "gb5x7tr7a6",
+                "label": "J6 Long vdo 1 - Script-storyboard   -  execute",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 4,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "zic60hyfv0q",
+                "label": "EMS  Script  - Storyboard - Budget",
+                "color": "ems",
+                "status": "todo",
+                "startCol": 5,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            }
+        ]
+    },
+    {
+        "dates": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            {
+                "n": 10,
+                "hol": 1
+            },
+            11
+        ],
+        "bars": [
+            {
+                "id": "ujrzmdukoqr",
+                "label": "J6 Long Vdo 1 Shoot       -          Edit       -       Review        -        QC        -        Publish",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 3,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "3qcwdadneon",
+                "label": "J6  Deadline",
+                "color": "ems",
+                "status": "todo",
+                "startCol": 5,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "02lrx2uqx2rj",
+                "label": "EMS  [Reels]  - Execute  -  Edit   -   QC   - Publish",
+                "color": "ems",
+                "status": "todo",
+                "startCol": 2,
+                "endCol": 4,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "3jly9jvh7s2",
+                "label": "Reels 3 Script,Stroyboard - Execution - Edit",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 3,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "vqicqip9n29",
+                "label": "INHOUSE - Script - Budget - Storyboard",
+                "color": "ih",
+                "status": "todo",
+                "startCol": 4,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "dhr7c3bgk7v",
+                "label": "DEADLINE",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 4,
+                "endCol": 4,
+                "detail": "",
+                "segs": null
+            }
+        ]
+    },
+    {
+        "dates": [
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+        ],
+        "bars": [
+            {
+                "id": "7em22ew9s9h",
+                "label": "INHOUSE    Execution        -         Edit          -          QC          -           Publish",
+                "color": "ih",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 4,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "sye7fbusl58",
+                "label": "DEADLINE",
+                "color": "ih",
+                "status": "todo",
+                "startCol": 5,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "aj5nln7hb2",
+                "label": "j6 Reels 3   QC -   Publish",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 1,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "beh5jx3d3pq",
+                "label": "J6 DEADLINE",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 2,
+                "endCol": 2,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "wnet141byo",
+                "label": "MBM  - Budget  -    Script   -    Story board   -   Execution    -     Edit     -      QC   -  Publish",
+                "color": "mbm",
+                "status": "todo",
+                "startCol": 2,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "m5uxkqnx1aa",
+                "label": "J6 LV 2  Script, StoryBoard, Execution,",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 4,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "hdmlhyen0i4",
+                "label": "MBM - DEADLINE",
+                "color": "mbm",
+                "status": "todo",
+                "startCol": 6,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            }
+        ]
+    },
+    {
+        "dates": [
+            19,
+            20,
+            21,
+            22,
+            23,
+            {
+                "n": 24,
+                "hol": 1
+            },
+            25
+        ],
+        "bars": [
+            {
+                "id": "pdi8xa5pz2",
+                "label": "J6 LV2 · Edit  -  QC  -  Publish",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 2,
+                "detail": "Long-form pipeline: Budget+Concept (1d) → Script (1d) → Storyboard (1d) → Execution/pre-prod (1d) → Shoot (1-2d) → Edit (2-3d) → Submission+QC (1d) → Approval+Publish (1d). Full stage-by-stage = 9-11 days; the 7-day estimate compresses the first 3 and last 3 stages into one day each.",
+                "segs": null
+            },
+            {
+                "id": "prltojxqaij",
+                "label": "DEADLINE",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 3,
+                "endCol": 3,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "9xtfb3rngli",
+                "label": "EMS Vedio 2  Budget - Script - Storyboard -  Execution  -  Edit   -  QC    -   Upload",
+                "color": "ems",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "rzxh5uwukyq",
+                "label": "J6 Review Meeting trial end",
+                "color": "j6",
+                "status": "todo",
+                "startCol": 3,
+                "endCol": 3,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "km72vmnmfb",
+                "label": "MBM Video 2 – Concept/Script -  BUDGET   -",
+                "color": "mbm",
+                "status": "todo",
+                "startCol": 4,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "ee5xegraetl",
+                "label": "INHOUSE  -   Script  -   Budget",
+                "color": "ih",
+                "status": "todo",
+                "startCol": 4,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            }
+        ]
+    },
+    {
+        "dates": [
+            26,
+            27,
+            28,
+            29,
+            30,
+            31
+        ],
+        "bars": [
+            {
+                "id": "xzkmqgy3n1",
+                "label": "MBM    -  Execution   - EDIT   -    QC    -    Upload",
+                "color": "mbm",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "kmmrucxevai",
+                "label": "DEADLINE",
+                "color": "ems",
+                "status": "todo",
+                "startCol": 1,
+                "endCol": 1,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "t05com9yo0o",
+                "label": "INHOUSE - Execution    -   EDIT    - QC     -    UPload",
+                "color": "ih",
+                "status": "todo",
+                "startCol": 2,
+                "endCol": 5,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "c3lsqgqvgkh",
+                "label": "DEADLINE",
+                "color": "ih",
+                "status": "todo",
+                "startCol": 6,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "6poop1qo1nx",
+                "label": "MONTHLY REVIEW AND NEXT MONTH PLANNING",
+                "color": "tv",
+                "status": "todo",
+                "startCol": 3,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            },
+            {
+                "id": "wj1l4fh9hg",
+                "label": "MBM   -  DEADLINE",
+                "color": "mbm",
+                "status": "todo",
+                "startCol": 6,
+                "endCol": 6,
+                "detail": "",
+                "segs": null
+            }
+        ]
+    }
+] },
+{ name:"November 2026",
+  note:"Capacity-rhythm template — topics/dates TBD, cadence only. Refresh 2–3 weeks ahead with confirmed content.",
+  weeks:[
+    {dates:[null,null,null,null,null,null,1],bars:[]},
+    {dates:[2,3,4,5,6,7,8],bars:[
+      bar("EMS – TBD","ems","todo",1,2), bar("MBM – TBD","mbm","todo",3,4), bar("In-House – TBD","ih","todo",5,5),
+    ]},
+    {dates:[9,10,11,12,13,{n:14,hol:1},15],bars:[
+      bar("EMS – TBD","ems","todo",1,2), bar("MBM – TBD","mbm","todo",3,4),
+    ]},
+    {dates:[16,17,18,19,20,21,22],bars:[
+      bar("EMS – TBD","ems","todo",1,2), bar("MBM – TBD","mbm","todo",3,4), bar("In-House – TBD","ih","todo",5,5),
+    ]},
+    {dates:[23,24,25,26,27,{n:28,hol:1},29],bars:[]},
+    {dates:[30],bars:[bar("EMS – TBD","ems","todo",1,1)]},
+  ]},
+{ name:"December 2026",
+  note:"Capacity-rhythm template, as above. 21–31 Dec kept deliberately light — confirm year-end office schedule with mentor.",
+  weeks:[
+    {dates:[null,1,2,3,4,5,6],bars:[
+      bar("MBM – TBD","mbm","todo",2,3), bar("In-House – TBD","ih","todo",4,4),
+    ]},
+    {dates:[7,8,9,10,11,{n:12,hol:1},13],bars:[
+      bar("EMS – TBD","ems","todo",1,2), bar("MBM – TBD","mbm","todo",3,4),
+    ]},
+    {dates:[14,15,16,17,18,19,20],bars:[bar("In-House – TBD","ih","todo",1,1)]},
+    {dates:[21,22,23,24,25,{n:26,hol:1},27],bars:[]},
+    {dates:[28,29,30,31],bars:[]},
+  ]},
+];
+
+const STORE_KEY = 'lusei_calendar_v2';
+let months;
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  months = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_MONTHS));
+}catch(e){ months = JSON.parse(JSON.stringify(DEFAULT_MONTHS)); }
+
+(function migrateV3(){
+  try{
+    if(localStorage.getItem('lusei_mig_v3')) return;
+    const OLD=["📝 J6 – Deal Agreed","🎬✂️🔍 J6 Reel 1 – Shoot→QC","✅ Reel 1 – Publish (target)","📝🎬✂️ J6 Reel 2 – Concept→Edit","✂️🔍✅ J6 Reel 2 – Edit→Publish","📝🎬✂️🔍 J6 Reel 3 – Concept→QC","📝📋🎬 J6 Long-form 1 – Concept→Shoot","✅ Reel 3 – Publish (target)","🎬✂️🔍 J6 Long-form 1 – Shoot→QC","📝📋 J6 Long-form 2 – Concept→Storyboard","✅ Long-form 1 – Publish (target)","🎬✂️🔍✅ J6 Long-form 2 – Shoot→Publish"];
+    [0,1].forEach(mi=>{
+      const fresh=JSON.parse(JSON.stringify(DEFAULT_MONTHS[mi].weeks));
+      months[mi].weeks.forEach((wk,wi)=>{
+        wk.bars=(wk.bars||[]).filter(b=>OLD.indexOf(b.label)===-1);
+        const have=new Set(wk.bars.map(b=>b.label));
+        (fresh[wi]&&fresh[wi].bars||[]).forEach(b=>{ if(!have.has(b.label)) wk.bars.push(b); });
+      });
+    });
+    localStorage.setItem(STORE_KEY, JSON.stringify(months));
+    localStorage.setItem('lusei_mig_v3','1');
+  }catch(e){}
+})();
+(function migrateV4(){
+  try{
+    if(localStorage.getItem('lusei_mig_v4')) return;
+    months[0].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[0].weeks));
+    months[1].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[1].weeks));
+    localStorage.setItem(STORE_KEY, JSON.stringify(months));
+    localStorage.setItem('lusei_mig_v4','1');
+  }catch(e){}
+})();
+(function migrateV5(){
+  try{
+    if(localStorage.getItem('lusei_mig_v5')) return;
+    months[0].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[0].weeks));
+    months[1].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[1].weeks));
+    localStorage.setItem(STORE_KEY, JSON.stringify(months));
+    localStorage.setItem('lusei_mig_v5','1');
+  }catch(e){}
+})();
+(function migrateV6(){
+  try{
+    if(localStorage.getItem('lusei_mig_v6')) return;
+    months[0].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[0].weeks));
+    months[1].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[1].weeks));
+    localStorage.setItem(STORE_KEY, JSON.stringify(months));
+    localStorage.setItem('lusei_mig_v6','1');
+  }catch(e){}
+})();
+(function migrateV7(){
+  try{
+    if(localStorage.getItem('lusei_mig_v7')) return;
+    months[0].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[0].weeks));
+    months[1].weeks = JSON.parse(JSON.stringify(DEFAULT_MONTHS[1].weeks));
+    localStorage.setItem(STORE_KEY, JSON.stringify(months));
+    localStorage.setItem('lusei_mig_v7','1');
+  }catch(e){}
+})();
+function persist(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(months)); }catch(e){} }
+const MONTH_NUM = {January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
+function pad2(n){ return String(n).padStart(2,'0'); }
+function dayNumOf(d){ return d==null ? null : (typeof d==='object' ? d.n : d); }
+function icsDate(y,mo,day){ return `${y}${pad2(mo)}${pad2(day)}`; }
+function addDay(y,mo,day){ const d=new Date(y,mo-1,day+1); return {y:d.getFullYear(), mo:d.getMonth()+1, day:d.getDate()}; }
+function buildICS(){
+  let out = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Lusei Entertainment//Production Calendar//EN\r\nCALSCALE:GREGORIAN\r\n";
+  const stamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  months.forEach(m=>{
+    const [monthName, yearStr] = m.name.split(' ');
+    const mo = MONTH_NUM[monthName]; const y = parseInt(yearStr);
+    m.weeks.forEach(wk=>{
+      (wk.bars||[]).forEach(b=>{
+        const startDay = dayNumOf(wk.dates[b.startCol-1]);
+        const endDay = dayNumOf(wk.dates[b.endCol-1]);
+        if(startDay==null || endDay==null) return; // skip if span touches an empty/adjacent-month cell
+        const endExcl = addDay(y,mo,endDay); // DTEND is exclusive in all-day ICS events
+        const uid = b.id + "@lusei-calendar";
+        const desc = (b.detail||'').replace(/\r?\n/g,'\\n');
+        out += "BEGIN:VEVENT\r\n";
+        out += `UID:${uid}\r\n`;
+        out += `DTSTAMP:${stamp}\r\n`;
+        out += `DTSTART;VALUE=DATE:${icsDate(y,mo,startDay)}\r\n`;
+        out += `DTEND;VALUE=DATE:${icsDate(endExcl.y,endExcl.mo,endExcl.day)}\r\n`;
+        const statusTag = b.status==='done' ? '✅ DONE' : (b.status==='progress' ? '▶ IN PROGRESS' : '☐ TO-DO');
+        const projTag = PROJECT_NAME[b.color] || b.color.toUpperCase();
+        out += `SUMMARY:${statusTag} — ${projTag} — ${(b.label||'').replace(/[\r\n]/g,' ')}\r\n`;
+        if(desc) out += `DESCRIPTION:${desc}\r\n`;
+        out += `STATUS:${b.status==='done'?'CONFIRMED':'TENTATIVE'}\r\n`;
+        out += "END:VEVENT\r\n";
+      });
+    });
+  });
+  out += "END:VCALENDAR\r\n";
+  return out;
+}
+async function exportICS(){
+  const ics = buildICS();
+  try{
+    if(window.claude && window.claude.use){
+      const downloads = await window.claude.use("downloads");
+      if(downloads){ await downloads.save({filename:"lusei-calendar.ics", data: ics}); return; }
+    }
+    throw new Error('no-downloads-capability');
+  }catch(e){
+    document.getElementById('exportText').value = ics;
+    document.getElementById('exportOverlay').classList.add('show');
+  }
+}
+
+months.forEach(m=>{ if(m.note && m.note.indexOf('Plan begins 22 Sep')===0) m.note=''; });
+const dow = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+let activeMonth = 0, editCtx = null;
+
+function render(){
+  const tabsEl = document.getElementById('tabs'); tabsEl.innerHTML='';
+  const monthsEl = document.getElementById('months'); monthsEl.innerHTML='';
+  months.forEach((m,mi)=>{
+    const tab=document.createElement('button');
+    tab.className='tab'+(mi===activeMonth?' active':'');
+    tab.textContent=m.name.split(' ')[0];
+    tab.onclick=()=>{activeMonth=mi; render();};
+    tabsEl.appendChild(tab);
+
+    const mDiv=document.createElement('div');
+    mDiv.className='month'+(mi===activeMonth?' active':'');
+    const dowRow=document.createElement('div'); dowRow.className='dow';
+    dow.forEach(d=>{const s=document.createElement('span'); s.textContent=d; dowRow.appendChild(s);});
+    mDiv.appendChild(dowRow);
+
+    m.weeks.forEach((wk,wi)=>{
+      const wDiv=document.createElement('div'); wDiv.className='week';
+      wk.dates.forEach((d,ci)=>{
+        const dn=document.createElement('div');
+        const isHol = d && typeof d==='object';
+        dn.className='daynum'+(isHol?' hol':'')+(d==null?' empty':'');
+        dn.style.gridColumn=(ci+1);
+        dn.textContent = d==null ? '' : (isHol? d.n+' · Hol' : d);
+        wDiv.appendChild(dn);
+      });
+      const lanes=[]; const laneOf={};
+      [...(wk.bars||[])].sort((a,b)=>a.startCol-b.startCol||a.endCol-b.endCol).forEach(b=>{
+        let l=0; while(lanes[l] && lanes[l]>=b.startCol) l++;
+        lanes[l]=b.endCol; laneOf[b.id]=l;
+      });
+      (wk.bars||[]).forEach((b,bi)=>{
+        const el=document.createElement('div');
+        el.className='bar '+b.status;
+        el.style.gridColumn = b.startCol+' / '+(b.endCol+1);
+        el.style.gridRow = 2+laneOf[b.id];
+        el.style.setProperty('--c', COLORS[b.color]);
+        el.textContent=b.label;
+        if(b.detail) el.title=b.detail;
+        el.onclick=()=>openModal(mi,wi,b.id);
+        wDiv.appendChild(el);
+      });
+      const addBtn=document.createElement('button');
+      addBtn.className='addbtn'; addBtn.textContent='+ add task to this week';
+      addBtn.style.gridRow = 2+lanes.length;
+      addBtn.onclick=()=>openModal(mi,wi,null);
+      wDiv.appendChild(addBtn);
+      mDiv.appendChild(wDiv);
+    });
+
+    if(m.note){const note=document.createElement('div'); note.className='note'; note.textContent=m.note;
+    mDiv.appendChild(note);}
+    monthsEl.appendChild(mDiv);
+  });
+}
+
+function openModal(mi,wi,barId){
+  editCtx = {mi,wi,barId};
+  const wk = months[mi].weeks[wi];
+  const existing = barId ? wk.bars.find(b=>b.id===barId) : null;
+  document.getElementById('modalTitle').textContent = existing? 'Edit task' : 'Add task';
+  document.getElementById('fLabel').value = existing? existing.label : '';
+  document.getElementById('fColor').value = existing? existing.color : 'j6';
+  document.getElementById('fStatus').value = existing? existing.status : 'todo';
+  document.getElementById('fStart').value = existing? existing.startCol : 1;
+  document.getElementById('fEnd').value = existing? existing.endCol : 1;
+  document.getElementById('delBtn').style.display = existing? 'block':'none';
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); editCtx=null; }
+function saveBar(){
+  const {mi,wi,barId} = editCtx;
+  const wk = months[mi].weeks[wi];
+  const label = document.getElementById('fLabel').value.trim() || 'Untitled task';
+  const color = document.getElementById('fColor').value;
+  const status = document.getElementById('fStatus').value;
+  let s = Math.max(1,Math.min(7, parseInt(document.getElementById('fStart').value)||1));
+  let e = Math.max(s,Math.min(7, parseInt(document.getElementById('fEnd').value)||s));
+  if(barId){
+    const b = wk.bars.find(x=>x.id===barId);
+    Object.assign(b,{label,color,status,startCol:s,endCol:e,segs:null});
+  } else {
+    wk.bars = wk.bars || [];
+    wk.bars.push(bar(label,color,status,s,e));
+  }
+  persist(); closeModal(); render();
+}
+function deleteBar(){
+  const {mi,wi,barId} = editCtx;
+  const wk = months[mi].weeks[wi];
+  wk.bars = wk.bars.filter(b=>b.id!==barId);
+  persist(); closeModal(); render();
+}
+function toggleTheme(){
+  const r=document.documentElement;
+  r.setAttribute('data-theme', r.getAttribute('data-theme')==='dark' ? 'light':'dark');
+}
+const NOTES_KEY='lusei_calendar_notes';
+const notesEl=document.getElementById('notes');
+try{ notesEl.value = localStorage.getItem(NOTES_KEY) || ''; }catch(e){}
+notesEl.addEventListener('input', ()=>{ try{ localStorage.setItem(NOTES_KEY, notesEl.value); }catch(e){} });
+
+async function attemptDownload(filename, payload){
+  try{
+    if(window.claude && window.claude.use){
+      const downloads = await window.claude.use("downloads");
+      if(downloads){ await downloads.save({filename, data: payload}); return; }
+    }
+    throw new Error('no-downloads-capability');
+  }catch(e){
+    document.getElementById('exportText').value = payload;
+    document.getElementById('exportOverlay').classList.add('show');
+  }
+}
+async function exportData(){
+  const payload = JSON.stringify({months, notes: notesEl.value, exportedAt: new Date().toISOString()}, null, 2);
+  attemptDownload("lusei-calendar-export.json", payload);
+}
+function copyExportText(){
+  const ta = document.getElementById('exportText');
+  ta.select();
+  try{
+    navigator.clipboard.writeText(ta.value).then(()=>alert('Copied.'));
+  }catch(e){
+    try{ document.execCommand('copy'); alert('Copied.'); }catch(e2){ alert('Select the text above and copy it manually.'); }
+  }
+}
+function importData(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(parsed.months){ months = parsed.months; }
+      if(typeof parsed.notes === 'string'){ notesEl.value = parsed.notes; try{ localStorage.setItem(NOTES_KEY, parsed.notes); }catch(e){} }
+      persist(); render();
+      alert('Imported. This is now loaded in this browser only — export again if you need to hand it off further.');
+    }catch(e){ alert('That file could not be read as a calendar export.'); }
+  };
+  reader.readAsText(file);
+}
+const tvEl=document.getElementById('tvPill');
+try{const v=localStorage.getItem('lusei_tv_label'); if(v) tvEl.textContent=v;}catch(e){}
+tvEl.addEventListener('input',()=>{try{localStorage.setItem('lusei_tv_label',tvEl.textContent);}catch(e){}});
+const tvColor=document.getElementById('tvColor');
+function applyTv(c){ document.documentElement.style.setProperty('--tv',c); tvEl.classList.remove('tbd'); tvEl.style.background=c; tvEl.style.color='#fff'; tvEl.style.border='none'; tvColor.value=c; }
+let savedTv=null; try{savedTv=localStorage.getItem('lusei_tv_color');}catch(e){}
+applyTv(savedTv||'#6A3FA0');
+tvColor.addEventListener('input',()=>{applyTv(tvColor.value); try{localStorage.setItem('lusei_tv_color',tvColor.value);}catch(e){} });
+render();
+</script>
+</body>
+</html>
